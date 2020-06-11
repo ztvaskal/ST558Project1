@@ -1,0 +1,126 @@
+---
+title: "NHL_JSON"
+author: "Zack Vaskalis"
+date: "6/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r LoadLibraries, include=FALSE, message=FALSE, echo=TRUE}
+library(tidyverse)
+#library(pipeR)
+#library(DT)
+#library(readr)
+#library(convertr)
+library(knitr)
+library(dplyr)
+#library(ggplot2)
+#library(bigrquery)
+#library(DBI)
+#library(RSQLite)
+library(jsonlite)
+library(httr)
+#library(tidyjson)
+```
+
+```{r franchise, echo=TRUE}
+#/franchise json data
+query_prefix <- 'https://records.nhl.com/site/api'
+query_suffix <- '/franchise'
+
+franchiseJSON <- GET(paste0(query_prefix,query_suffix))
+
+franchiseData <- fromJSON(content(franchiseJSON,"text", encoding = "UTF-8"),flatten = TRUE) 
+
+rename(franchiseData$data, franchiseID = id)
+
+franchiseData <- rename(franchiseData$data, franchiseID = id)
+franchiseData
+
+franchiseData[is.na(franchiseData)] <- ""
+franchiseData
+
+
+
+franchiseSelection <- franchiseData
+
+```
+
+```{r franchiseTotals, echo=TRUE}
+#/franchise team totals json data
+query_prefix <- 'https://records.nhl.com/site/api'
+query_suffix <- '/franchise-team-totals'
+
+franchiseTeamTotsJSON <- GET(paste0(query_prefix,query_suffix))
+
+franchiseTeamTotsData <- fromJSON(content(franchiseTeamTotsJSON,"text", encoding = "UTF-8"),flatten = TRUE)
+
+franchiseTeamTotsData <- rename(franchiseTeamTotsData$data, franchiseID = id)
+
+franchiseTeamTotsData
+ 
+```
+
+```{r listOfFranchises, echo=FALSE}
+franchiseSelection %>% select(franchiseID,teamPlaceName,teamCommonName) %>% arrange(teamPlaceName) %>>% (~ franchiseSelection)
+datatable(franchiseSelection, rownames = FALSE)
+```
+
+```{r franchiseSpecificTotals, echo=TRUE}
+#Specific franchise team totals json data
+query_prefix <- 'https://records.nhl.com/site/api'
+query_suffix <- '/franchise-season-records?cayenneExp=franchiseId='
+#Pit Penguins to TEST - need to develop as a function where this is user input
+specific_franchiseID <- '17'
+
+franchiseIDTeamTotsDataJSON <- GET(paste0(query_prefix,query_suffix,specific_franchiseID))
+
+franchiseIDTeamTotsData <- fromJSON(content(franchiseIDTeamTotsDataJSON,"text", encoding = "UTF-8"),flatten = TRUE)
+
+franchiseIDTeamTotsData <- rename(franchiseIDTeamTotsData$data, franchiseID = id)
+
+franchiseIDTeamTotsData
+
+```
+
+```{r franchiseGoalieRecords, echo=TRUE}
+#Specific franchise Goalie Records json data
+query_prefix <- 'https://records.nhl.com/site/api'
+query_suffix <- '/franchise-goalie-records?cayenneExp=franchiseId='
+#Pit Penguins to TEST - need to develop as a function where this is user input
+specific_franchiseID <- '17'
+
+franchiseIDGoalieJSON <- GET(paste0(query_prefix,query_suffix,specific_franchiseID))
+
+franchiseIDGoalieData <- fromJSON(content(franchiseIDGoalieJSON,"text", encoding = "UTF-8"),flatten = TRUE)
+
+franchiseIDGoalieData <- rename(franchiseIDGoalieData$data, franchiseID = id)
+
+franchiseIDGoalieData
+
+```
+
+```{r franchiseSkaterRecords, echo=TRUE}
+#Specific franchise Skater Records json data
+query_prefix <- 'https://records.nhl.com/site/api'
+query_suffix <- '/franchise-skater-records?cayenneExp=franchiseId='
+#Pit Penguins to TEST - need to develop as a function where this is user input
+specific_franchiseID <- '17'
+
+franchiseIDSkaterJSON <- GET(paste0(query_prefix,query_suffix,specific_franchiseID))
+
+franchiseIDSkaterData <- fromJSON(content(franchiseIDSkaterJSON,"text", encoding = "UTF-8"),flatten = TRUE)
+
+franchiseIDSkaterData <- rename(franchiseIDSkaterData$data, franchiseID = id)
+
+franchiseIDSkaterData
+
+```
+
+
+
+
+
