@@ -3,7 +3,7 @@ title: "README"
 author: "Zack Vaskalis"
 date: "6/12/2020"
 output: 
-  github_document:
+  rmarkdown::github_document:
     html_preview: TRUE
     toc: yes
     toc_depth: 3
