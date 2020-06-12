@@ -6,35 +6,20 @@ output:
   rmarkdown::github_document:
     toc: TRUE
     toc_depth: 3
-  html_document:
-    toc: TRUE
-    toc_depth: 3
-    toc_float: 
-      toc_collapse: FALSE
+    html_preview: TRUE
 urlcolor: blue
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r LoadLibraries, include=FALSE, echo=TRUE}
-library(tidyverse)
-library(pipeR)
-library(DT)
 library(knitr)
-library(dplyr)
-library(jsonlite)
-library(httr)
-library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Reading and Summarizing JSON Datasets 
 
 A Vignette using National Hockey League (NHL) Application Programming Interface (API) - No "Hat Tricks" here!   
 
-
-```{r CrabImage, out.width = "200px", echo=FALSE}
+```{r jsonImage, out.width = "200px", echo=FALSE}
 knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/c/c9/JSON_vector_logo.svg")
 ```
 
@@ -102,7 +87,18 @@ We will use R to build 5 functions that return well-formatted, parsed data from 
 
 ### 1. NHL Franchises
 
-Let's start with number 1.  Function `getFranchises()` will query the NHL Franchise API to return a data table with all of the NHL franchises, what the team place name and common name are, what the team and franchise IDs are for ALL of the JSON data being queried, as well as the year of their first season (written as 19171918 to indicate it is the 1917-1918 season), as well as the lastSeasonId if that specific franchise no longer exists.   
+Let's start with number 1.  Function `getFranchises()` will query the NHL Franchise API to return a data table with all of the NHL franchises, what the team place name and common name are, what the team and franchise IDs are for ALL of the JSON data being queried, as well as the year of their first season (written as 19171918 to indicate it is the 1917-1918 season), as well as the lastSeasonId if that specific franchise no longer exists.    
+
+```{r LoadLibraries, include=FALSE, echo=TRUE}
+#initialize all needed libraries
+library(tidyverse)
+library(pipeR)
+library(DT)
+library(dplyr)
+library(jsonlite)
+library(httr)
+library(ggplot2)
+```
 
 ```{r franchise, echo=TRUE}
 getFranchises <- function(...){
