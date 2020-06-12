@@ -1,7 +1,7 @@
 ---
 title: "NHL_JSON"
 author: "Zack Vaskalis"
-date: "6/10/2020"
+date: "6/12/2020"
 output: html_document
 ---
 
@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r LoadLibraries, include=FALSE, message=FALSE, echo=TRUE}
+```{r LoadLibraries, include=FALSE, message=FALSE, echo=TRUE, results='hide'}
 library(tidyverse)
 library(pipeR)
 library(DT)
@@ -32,111 +32,182 @@ library(ggplot2)
 ```
 
 ```{r franchise, echo=TRUE}
-getFranchises <- function(...){
+#Function to get Franchises
+  getFranchises <- function(...)
+  {
 #franchise json data.  Set up components of URL for API query using GET() function
-  query_prefix <- 'https://records.nhl.com/site/api'
-  query_suffix <- '/franchise'
-  franchiseJSON <- GET(paste0(query_prefix,query_suffix))
+    query_prefix <- 'https://records.nhl.com/site/api'
+    query_suffix <- '/franchise'
+    franchiseJSON <- GET(paste0(query_prefix,query_suffix))
 
 #Transform Data from JSON to a data frame
-  franchiseData <- fromJSON(content(franchiseJSON,"text", encoding = "UTF-8"),flatten = TRUE) 
+    franchiseData <- fromJSON(content(franchiseJSON,"text", encoding = "UTF-8"),flatten = TRUE) 
 
 #Rename id to franchiseID
-  franchiseData <- rename(franchiseData$data, franchiseID = id)
-  franchiseData
+    franchiseData <- rename(franchiseData$data, franchiseId = id)
+    franchiseData
 
 #Reorganize the data frame with columns in a more usable order
-  franchiseData %>% select(mostRecentTeamId, franchiseID, teamPlaceName, teamCommonName, firstSeasonId, lastSeasonId) %>%
-    arrange(teamPlaceName) %>>% (~ franchiseData)
-  franchiseDT <- datatable(franchiseData, rownames = FALSE)
+    franchiseData %>% select(mostRecentTeamId, franchiseId, teamPlaceName, teamCommonName, firstSeasonId, lastSeasonId) %>%
+      arrange(teamPlaceName) %>>% (~ franchiseData)
+    franchiseDT <- datatable(franchiseData, rownames = FALSE)
 
 #Initialize franchiseSelection Table for user to be able to see correct franchise ID for functions #3 - 5.
-  franchiseSelection <- franchiseData
+    franchiseSelection <- franchiseData
 
-#return datatable
-  return(list(franchiseDT,invisible(franchiseSelection)))
-}
+#return Data
+    return(list(franchiseDT,invisible(franchiseSelection)))
+  }
 ```
 
 ```{r callgetFranchise, echo=TRUE}
-getFranchises()[[1]]
+  getFranchises()[2]
 ```
 
 ```{r franchiseTotals, echo=TRUE}
-#/franchise team totals json data
-query_prefix <- 'https://records.nhl.com/site/api'
-query_suffix <- '/franchise-team-totals'
+#function to get Franchise Totals
+  getFranchiseTotals <- function(...)
+  {
+#franchise team totals json data.  Set up components of URL for API query using GET() function
+    query_prefix <- 'https://records.nhl.com/site/api'
+    query_suffix <- '/franchise-team-totals'
 
-franchiseTeamTotsJSON <- GET(paste0(query_prefix,query_suffix))
+#Get JSON Data
+    franchiseTeamTotsJSON <- GET(paste0(query_prefix,query_suffix))
+    franchiseTeamTotsData <- fromJSON(content(franchiseTeamTotsJSON,"text", encoding = "UTF-8"),flatten = TRUE)
 
-franchiseTeamTotsData <- fromJSON(content(franchiseTeamTotsJSON,"text", encoding = "UTF-8"),flatten = TRUE)
+#Reorganize the data frame with columns in a more usable order
+    franchiseTeamTotsDataTBL <- tibble::as_tibble(franchiseTeamTotsData)
+    franchiseTeamTotsDataTBL$data %>% select(franchiseId, teamName, triCode, wins, losses, ties, overtimeLosses, shutouts, shootoutWins,
+                                             shootoutLosses, penaltyMinutes, points, pointPctg, homeWins, homeLosses, homeTies,
+                                             homeOvertimeLosses, roadWins, roadLosses, roadTies, roadOvertimeLosses, gameTypeId,
+                                             gamesPlayed, goalsAgainst, goalsFor, id, teamId, activeFranchise, firstSeasonId, lastSeasonId) %>%
+      arrange(teamName) %>>% (~ franchiseTeamTotsDataTBL)
 
-franchiseTeamTotsData <- rename(franchiseTeamTotsData$data, franchiseID = id)
-
-franchiseTeamTotsData
- 
+#return Data
+    return(franchiseTeamTotsDataTBL)
+  }
 ```
 
+```{r callgetFranchiseTotals, echo=TRUE}
+  datatable(getFranchiseTotals())
+```
 
-
-```{r listOfFranchises, echo=FALSE}
-invisible(getFranchises())
-franchiseSelection %>% select(franchiseID, teamPlaceName, teamCommonName) %>% arrange(teamPlaceName) %>>% (~ franchiseSelection)
-datatable(franchiseSelection, rownames = FALSE)
+```{r listOfFranchises, echo=TRUE}
+  franchiseSelection <- getFranchises()[2]
+  franchiseSelection[[1]] %>% select(franchiseId, teamPlaceName, teamCommonName) %>% arrange(teamPlaceName) %>%
+    datatable(franchiseSelection,rownames = FALSE, options = list(autoWidth = TRUE, columnDefs = list(list(width = '50px'))))
 ```
 
 ```{r franchiseSpecificTotals, echo=TRUE}
+#Function to get Franchise Specific Totals
+  getFranchiseSpecificTotals <- function(FranID, ...)
+  {
 #Specific franchise team totals json data
-query_prefix <- 'https://records.nhl.com/site/api'
-query_suffix <- '/franchise-season-records?cayenneExp=franchiseId='
-#Pit Penguins to TEST - need to develop as a function where this is user input
-specific_franchiseID <- '17'
+    query_prefix <- 'https://records.nhl.com/site/api'
+    query_suffix <- '/franchise-season-records?cayenneExp=franchiseId='
 
-franchiseIDTeamTotsDataJSON <- GET(paste0(query_prefix,query_suffix,specific_franchiseID))
+#Get Specific Team Input from User
+    specific_franchiseID <- FranID
 
-franchiseIDTeamTotsData <- fromJSON(content(franchiseIDTeamTotsDataJSON,"text", encoding = "UTF-8"),flatten = TRUE)
+#Get JSON Data
+    franchiseIDTeamTotsDataJSON <- GET(paste0(query_prefix,query_suffix,specific_franchiseID))
+    franchiseIDTeamTotsData <- fromJSON(content(franchiseIDTeamTotsDataJSON,"text", encoding = "UTF-8"),flatten = TRUE)
 
-franchiseIDTeamTotsData <- rename(franchiseIDTeamTotsData$data, franchiseID = id)
+#Reorganize the data frame with columns in a more usable order
+    franchiseIDTeamTotsDataTBL <- tibble::as_tibble(franchiseIDTeamTotsData)
+    franchiseIDTeamTotsDataTBL$data %>% select(franchiseName, franchiseId, id:winlessStreakDates) %>>% (~ franchiseIDTeamTotsDataTBL)
 
-franchiseIDTeamTotsData
+#Return Data    
+    return(franchiseIDTeamTotsDataTBL)
+  }
+```
 
+```{r callgetFranchiseSpecificTotals, echo=TRUE}
+#Two test function calls - one for my favorite team, GO PENS! & one for the hometown favorite Hurricanes!
+#function to pull records for Pittsburgh Penguins
+
+  datatable(t(getFranchiseSpecificTotals(17)), colnames = "")
+
+#Function to pull records for Carolina Hurricanes
+
+  datatable(t(getFranchiseSpecificTotals(26)), colnames = "")
 ```
 
 ```{r franchiseGoalieRecords, echo=TRUE}
+#Function to get Franchise Goalie Records
+  getFranchiseGoalieRecords <- function(FranID, ...)
+  {
 #Specific franchise Goalie Records json data
-query_prefix <- 'https://records.nhl.com/site/api'
-query_suffix <- '/franchise-goalie-records?cayenneExp=franchiseId='
-#Pit Penguins to TEST - need to develop as a function where this is user input
-specific_franchiseID <- '17'
+    query_prefix <- 'https://records.nhl.com/site/api'
+    query_suffix <- '/franchise-goalie-records?cayenneExp=franchiseId='
 
-franchiseIDGoalieJSON <- GET(paste0(query_prefix,query_suffix,specific_franchiseID))
+#Get Specific Team Input from User
+    specific_franchiseID <- FranID
 
-franchiseIDGoalieData <- fromJSON(content(franchiseIDGoalieJSON,"text", encoding = "UTF-8"),flatten = TRUE)
+#Get JSON Data
+    franchiseIDGoalieJSON <- GET(paste0(query_prefix,query_suffix,specific_franchiseID))
+    franchiseIDGoalieData <- fromJSON(content(franchiseIDGoalieJSON,"text", encoding = "UTF-8"),flatten = TRUE)
 
-franchiseIDGoalieData <- rename(franchiseIDGoalieData$data, franchiseID = id)
+#Reorganize the data frame with columns in a more usable order
 
-franchiseIDGoalieData
+    goalieDF <- franchiseIDGoalieData$data
+    goalieDF %>% select(franchiseId, franchiseName, firstName, lastName, gamesPlayed, wins, losses, ties,
+                        mostSavesOneGame, mostShotsAgainstOneGame, mostGoalsAgainstOneGame, id:wins) %>>% (~ goalieDF)
 
+#Return data
+    return(goalieDF)
+  }
+```
+
+```{r callgetFranchiseGoalieRecords, echo=TRUE}
+#Two test function calls - one for my favorite team, GO PENS! & one for the hometown favorite Hurricanes!
+#function to pull records for Pittsburgh Penguins
+
+  datatable(getFranchiseGoalieRecords(17))
+
+#Function to pull records for Carolina Hurricanes
+
+  datatable(getFranchiseGoalieRecords(26))
 ```
 
 ```{r franchiseSkaterRecords, echo=TRUE}
+#Function to get Franchise Goalie Records
+  getFranchiseSkaterRecords <- function(FranID, ...)
+  {
+
 #Specific franchise Skater Records json data
-query_prefix <- 'https://records.nhl.com/site/api'
-query_suffix <- '/franchise-skater-records?cayenneExp=franchiseId='
-#Pit Penguins to TEST - need to develop as a function where this is user input
-specific_franchiseID <- '17'
+    query_prefix <- 'https://records.nhl.com/site/api'
+    query_suffix <- '/franchise-skater-records?cayenneExp=franchiseId='
 
-franchiseIDSkaterJSON <- GET(paste0(query_prefix,query_suffix,specific_franchiseID))
+#Get Specific Team Input from User
+    specific_franchiseID <- FranID
+    
+#Get JSON Data
+    franchiseIDSkaterJSON <- GET(paste0(query_prefix,query_suffix,specific_franchiseID))
+    franchiseIDSkaterData <- fromJSON(content(franchiseIDSkaterJSON,"text", encoding = "UTF-8"),flatten = TRUE)
 
-franchiseIDSkaterData <- fromJSON(content(franchiseIDSkaterJSON,"text", encoding = "UTF-8"),flatten = TRUE)
+#Reorganize the data frame with columns in a more usable order
 
-franchiseIDSkaterData <- rename(franchiseIDSkaterData$data, franchiseID = id)
-
-franchiseIDSkaterData
-
+    skaterDF <- franchiseIDSkaterData$data
+    skaterDF %>% select(franchiseId, franchiseName, firstName, lastName, positionCode, gamesPlayed, goals, assists, penaltyMinutes,
+                        mostGoalsOneGame, mostAssistsOneGame, mostPenaltyMinutesOneSeason, id:seasons) %>% arrange(desc(goals)) %>>% (~ skaterDF)
+    
+#Return Data
+    return(skaterDF)
+  }
 ```
 
+```{r callgetFranchiseSkaterRecords, echo=TRUE}
+#Two test function calls - one for my favorite team, GO PENS! & one for the hometown favorite Hurricanes!
+#function to pull records for Pittsburgh Penguins
 
+  datatable(getFranchiseSkaterRecords(17))
+
+#Function to pull records for Carolina Hurricanes
+
+  datatable(getFranchiseSkaterRecords(26))
+```
 
 
 
