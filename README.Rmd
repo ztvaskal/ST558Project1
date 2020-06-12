@@ -4,14 +4,14 @@ author: "Zack Vaskalis"
 date: "6/12/2020"
 output: 
   rmarkdown::github_document:
+    toc: TRUE
+    toc_depth: 3
   html_document:
     toc: TRUE
     toc_depth: 3
     toc_float: 
       toc_collapse: FALSE
-#    html_preview: TRUE
 urlcolor: blue
-always_allow_html: true
 ---
 
 ```{r setup, include=FALSE}
