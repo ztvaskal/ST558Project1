@@ -9,6 +9,18 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+library packages needed:    
+
+`library(tidyverse)`    
+`library(pipeR)`    
+`library(DT)`    
+`library(knitr)`    
+`library(dplyr)`    
+`library(jsonlite)`    
+`library(httr)`    
+`library(ggplot2)`    
+
+
 ```{r LoadLibraries, include=FALSE, message=FALSE, echo=TRUE, results='hide'}
 library(tidyverse)
 library(pipeR)
@@ -18,17 +30,6 @@ library(dplyr)
 library(jsonlite)
 library(httr)
 library(ggplot2)
-#library(readr)
-#library(convertr)
-#library(ggplot2)
-#library(bigrquery)
-#library(DBI)
-#library(RSQLite)
-#library(tidyjson)
-#library(readr)
-#library(convertr)
-#library(DBI)
-#library(RSQLite)
 ```
 
 ```{r franchise, echo=TRUE}
@@ -48,7 +49,8 @@ library(ggplot2)
     franchiseData
 
 #Reorganize the data frame with columns in a more usable order
-    franchiseData %>% select(mostRecentTeamId, franchiseId, teamPlaceName, teamCommonName, firstSeasonId, lastSeasonId) %>%
+    franchiseData %>% select(mostRecentTeamId, franchiseId, teamPlaceName, teamCommonName,
+                             firstSeasonId, lastSeasonId) %>%
       arrange(teamPlaceName) %>>% (~ franchiseData)
     franchiseDT <- datatable(franchiseData, rownames = FALSE)
 
@@ -56,12 +58,12 @@ library(ggplot2)
     franchiseSelection <- franchiseData
 
 #return Data
-    return(list(franchiseDT,invisible(franchiseSelection)))
+    return(franchiseSelection)
   }
 ```
 
 ```{r callgetFranchise, echo=TRUE}
-  getFranchises()[2]
+  datatable(getFranchises())
 ```
 
 ```{r franchiseTotals, echo=TRUE}
@@ -78,10 +80,11 @@ library(ggplot2)
 
 #Reorganize the data frame with columns in a more usable order
     franchiseTeamTotsDataTBL <- tibble::as_tibble(franchiseTeamTotsData)
-    franchiseTeamTotsDataTBL$data %>% select(franchiseId, teamName, triCode, wins, losses, ties, overtimeLosses, shutouts, shootoutWins,
-                                             shootoutLosses, penaltyMinutes, points, pointPctg, homeWins, homeLosses, homeTies,
-                                             homeOvertimeLosses, roadWins, roadLosses, roadTies, roadOvertimeLosses, gameTypeId,
-                                             gamesPlayed, goalsAgainst, goalsFor, id, teamId, activeFranchise, firstSeasonId, lastSeasonId) %>%
+    franchiseTeamTotsDataTBL$data %>%
+      select(franchiseId, teamName, triCode, wins, losses, ties, overtimeLosses, shutouts, shootoutWins,
+             shootoutLosses, penaltyMinutes, points, pointPctg, homeWins, homeLosses, homeTies,
+             homeOvertimeLosses, roadWins, roadLosses, roadTies, roadOvertimeLosses, gameTypeId,
+             gamesPlayed, goalsAgainst, goalsFor, id, teamId, activeFranchise, firstSeasonId, lastSeasonId) %>%
       arrange(teamName) %>>% (~ franchiseTeamTotsDataTBL)
 
 #return Data
@@ -90,13 +93,14 @@ library(ggplot2)
 ```
 
 ```{r callgetFranchiseTotals, echo=TRUE}
-  datatable(getFranchiseTotals())
+  franchiseFull <- getFranchiseTotals()
+  datatable(franchiseFull[c(1:8)])
 ```
 
 ```{r listOfFranchises, echo=TRUE}
-  franchiseSelection <- getFranchises()[2]
-  franchiseSelection[[1]] %>% select(franchiseId, teamPlaceName, teamCommonName) %>% arrange(teamPlaceName) %>%
-    datatable(franchiseSelection,rownames = FALSE, options = list(autoWidth = TRUE, columnDefs = list(list(width = '50px'))))
+  franchiseSelection <- getFranchises()
+  franchiseSelection %>% select(franchiseId, teamPlaceName, teamCommonName) %>% arrange(teamPlaceName) %>>%
+    (~ frSelect) %>% datatable(frSelect,rownames = FALSE)
 ```
 
 ```{r franchiseSpecificTotals, echo=TRUE}
@@ -116,7 +120,8 @@ library(ggplot2)
 
 #Reorganize the data frame with columns in a more usable order
     franchiseIDTeamTotsDataTBL <- tibble::as_tibble(franchiseIDTeamTotsData)
-    franchiseIDTeamTotsDataTBL$data %>% select(franchiseName, franchiseId, id:winlessStreakDates) %>>% (~ franchiseIDTeamTotsDataTBL)
+    franchiseIDTeamTotsDataTBL$data %>% select(franchiseName, franchiseId, id:winlessStreakDates) %>>%
+      (~ franchiseIDTeamTotsDataTBL)
 
 #Return Data    
     return(franchiseIDTeamTotsDataTBL)
@@ -164,11 +169,13 @@ library(ggplot2)
 #Two test function calls - one for my favorite team, GO PENS! & one for the hometown favorite Hurricanes!
 #function to pull records for Pittsburgh Penguins
 
-  datatable(getFranchiseGoalieRecords(17))
+  goalieFull <- getFranchiseGoalieRecords(17)
+  datatable(goalieFull[c(1:8)])
 
 #Function to pull records for Carolina Hurricanes
 
-  datatable(getFranchiseGoalieRecords(26))
+  goalieFull <- getFranchiseGoalieRecords(26)
+  datatable(goalieFull[c(1:8)])
 ```
 
 ```{r franchiseSkaterRecords, echo=TRUE}
@@ -190,8 +197,9 @@ library(ggplot2)
 #Reorganize the data frame with columns in a more usable order
 
     skaterDF <- franchiseIDSkaterData$data
-    skaterDF %>% select(franchiseId, franchiseName, firstName, lastName, positionCode, gamesPlayed, goals, assists, penaltyMinutes,
-                        mostGoalsOneGame, mostAssistsOneGame, mostPenaltyMinutesOneSeason, id:seasons) %>% arrange(desc(goals)) %>>% (~ skaterDF)
+    skaterDF %>% select(franchiseId, franchiseName, firstName, lastName, positionCode, gamesPlayed, goals,
+                        assists, penaltyMinutes, mostGoalsOneGame, mostAssistsOneGame, mostPenaltyMinutesOneSeason,
+                        id:seasons) %>% arrange(desc(goals)) %>>% (~ skaterDF)
     
 #Return Data
     return(skaterDF)
@@ -200,13 +208,14 @@ library(ggplot2)
 
 ```{r callgetFranchiseSkaterRecords, echo=TRUE}
 #Two test function calls - one for my favorite team, GO PENS! & one for the hometown favorite Hurricanes!
-#function to pull records for Pittsburgh Penguins
-
-  datatable(getFranchiseSkaterRecords(17))
+#function to pull records for Pittsburgh Penguins. Variable teamFull has full dataset. Needed to subset to display
+  teamFull <- getFranchiseSkaterRecords(17)
+  datatable(teamFull[c(1:8)])
 
 #Function to pull records for Carolina Hurricanes
 
-  datatable(getFranchiseSkaterRecords(26))
+  teamFull <- getFranchiseSkaterRecords(26)
+  datatable(teamFull[c(1:8)])
 ```
 
 
