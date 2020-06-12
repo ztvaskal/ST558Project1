@@ -11,6 +11,8 @@ output:
   rmarkdown::github_document:
 #    html_preview: TRUE
 urlcolor: blue
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -133,5 +135,6 @@ getFranchises <- function(...){
 ```{r callgetFranchise, echo=TRUE}
 getFranchises()[[1]]
 ```
+
 
 
