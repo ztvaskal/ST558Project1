@@ -1,13 +1,15 @@
 ---
-title: "README"
+title: "ST558 Project 1"
 author: "Zack Vaskalis"
 date: "6/12/2020"
 output: 
-  rmarkdown::github_document:
-    html_preview: TRUE
-    toc: yes
+  html_document:
+    toc: TRUE
     toc_depth: 3
-#    toc_float: yes
+    toc_float: 
+      toc_collapse: FALSE
+  rmarkdown::github_document:
+#    html_preview: TRUE
 urlcolor: blue
 ---
 
@@ -19,15 +21,11 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(pipeR)
 library(DT)
-library(readr)
-library(convertr)
 library(knitr)
 library(dplyr)
-library(ggplot2)
-library(bigrquery)
 library(jsonlite)
-library(DBI)
-library(RSQLite)
+library(httr)
+library(ggplot2)
 ```
 
 # Reading and Summarizing JSON Datasets 
@@ -67,7 +65,7 @@ Extensible Markup Language (XML).  For more on this somewhat heated debate, chec
 *  [Has JSON Overtaken XML](https://www.c-sharpcorner.com/article/is-json-overridden-xml/#:~:text=XML%20has%20done%20a%20lot,still%20exist%20in%20this%20world.)
 *  [Is XML Dying?](https://blog.submain.com/json-and-xml-dying/)
 
-Tied to the reason above, web services and Application Programming Interfaces (APIs) use JSON format to provide public data.  Thus, it is used nearly everywhere, in particular in areas which were previously troubling such as with cross-domain communication.  As mentioned previously, with the dawn of JavaScript and XML, AJAX (Asynchronous JavaScript and XML), it became of greater importance for websites to be able to load data sources quickly, asynchronously, or in the background - all without slowing down the speed of loading and rendering the page.  Modern sites, like for example Twitter, use RSS (**R**esource Description Framework **S**ite **S**ummary) feeds, which is essentially XML-formatted plain text originally designed as a metadata data model.  Before we get too far down the proverbial rabbit hole, RSS feeds became popular because on the server-side they are easy to use and import.  However, if you try to use AJAX on them, you will get errors, because they are only able to load in the same domain the request is being made from - generally querys will result in errors.  This is truly where JSON shines, overcoming this inability to communicate across domains, and therefore is able to send data packets back to the domain making the call or query.  This is why we will be using JSON to query the NHL Hockey API without worry.     
+Tied to the reason above, web services and Application Programming Interfaces (APIs) use JSON format to provide public data.  Thus, it is used nearly everywhere, in particular in areas which were previously troubling such as with cross-domain communication.  As mentioned previously, with the dawn of JavaScript and XML, AJAX (Asynchronous JavaScript and XML), it became of greater importance for websites to be able to load data sources quickly, asynchronously, or in the background, all without slowing down the speed of loading and rendering the page.  Modern sites, like for example Twitter, use RSS (**R**esource Description Framework **S**ite **S**ummary) feeds, which is essentially XML-formatted plain text originally designed as a metadata data model.  Before we get too far down the proverbial rabbit hole, RSS feeds became popular because on the server-side they are easy to use and import.  However, if you try to use AJAX on them, you will get errors, because they are only able to load in the same domain the request is being made from - generally querys will result in errors.  This is truly where JSON shines, overcoming this inability to communicate across domains, and therefore is able to send data packets back to the domain making the call or query.  This is why we will be using JSON to query the NHL Hockey API without worry.     
 
 ### A good way to store data?
 
@@ -83,15 +81,57 @@ So now that we have come to a basic level of understanding what JSON data is, wh
 *  `jsonlite`
 *  `tidyjson`
 
-There is a great resource, [A biased comparsion of JSON packages in R](), which compares the top three packages listed above, and is in favor of `jsonlite`, which I would have to agree with, out of that list jsonlite is by far the best, for some of the reasons mentioned in that resource.  
+There is a great resource, [A biased comparsion of JSON packages in R](http://rstudio-pubs-static.s3.amazonaws.com/31702_9c22e3d1a0c44968a4a1f9656f1800ab.html), which compares the top three packages listed above, and is in favor of `jsonlite`, which I would have to agree with, out of that list jsonlite is by far the best, for some of the reasons mentioned in that resource.  
 
-However, published on the [CRAN R Project website](https://cran.r-project.org/) a little under two weeks ago, is a new package `tidyjson` which seems to have some promise.  What is especially intriguing is the writeup on the `tidyjson` package page itself which can be found [here](https://cran.r-project.org/web/packages/tidyjson/vignettes/introduction-to-tidyjson.html#:~:text=Tidyjson%20provides%20a%20grammar%20for,work%20with%20in%20the%20tidyverse.)  I am presenting it here so that you know it is available as a resource.  With it being so new, I believe it is best to utilize `jsonlite`.
+However, published on the [CRAN R Project website](https://cran.r-project.org/) a little under two weeks ago, is a new package `tidyjson` which seems to have some promise.  What is especially intriguing is the writeup on the `tidyjson` package page itself which can be found on the  [CRAN R Project website for tidyjson](https://cran.r-project.org/web/packages/tidyjson/vignettes/introduction-to-tidyjson.html#:~:text=Tidyjson%20provides%20a%20grammar%20for,work%20with%20in%20the%20tidyverse.)  I am presenting it here so that you know it is available as a resource.  With it being so new, I believe it is best to utilize `jsonlite`.
 
-_NEED REASONS FOR CHOOSING JSONLITE_
+The resource mentioned previously, [A biased comparsion of JSON packages in R](http://rstudio-pubs-static.s3.amazonaws.com/31702_9c22e3d1a0c44968a4a1f9656f1800ab.html) describes many benefits for using `jsonlite` to deal with JSON data that I agree with, so I will not rehash those here.  Additionally, however, besides `jsonlite` being the package we've explored so far in this course, I believe there are other benefits.  From the [CRAN R webiste for jsonlite](https://cran.r-project.org/web/packages/jsonlite/index.html) we see that `jsonlite` was originally built as a fork of `RJSONIO` but has since been completely rewritten.  The site also claims that `jsonlite` is a fast, robust, high-performance JSON parser and generator for R, optimized for statistical data and the web, and offers flexible, robust, high performance tools for working with JSON in R and is particularly powerful for building pipelines and interacting with a web API.  These are exactly all the things we want to do as part of this vignette, so `jsonlite` seems like the perfect choice.  Finally, `jsonlite`, in addition to converting JSON data to R objects, contains functions that can stream, validate, and prettify JSON data.  Again, this is what we want to do, so why not use it?!?
 
+## NHL API JSON Data
 
+Now that we know all about JSON data and the R packages, namely `jsonlite` that can help us deal with reading in such JSON data and creating R objects, we can now begin to explore the NHL data provided by the [NHL Records 'Franchise' API](https://gitlab.com/dword4/nhlapi/-/blob/master/records-api.md).
 
-```{r cars, echo=FALSE, results = 'hide'}
-summary(cars)
+We will use R to build 5 functions that return well-formatted, parsed data from this API.  The code chunks we develop will use the following NHL Records Franchise API calls:
+
+1.  /franchise (Returns id, firstSeasonId and lastSeasonId and name of every team in the history of the NHL)
+2.  /franchise-team-totals (Returns Total stats for every franchise (ex roadTies, roadWins, etc))
+3.  /franchise-season-records?cayenneExp=franchiseId=ID (Drill-down into season records for a user-specified franchise ID)
+4.  /franchise-goalie-records?cayenneExp=franchiseId=ID (Goalie records for a user-specified franchise ID)
+5.  /franchise-skater-records?cayenneExp=franchiseId=ID (Skater records, for a user-specified franchise ID)
+
+### 1. NHL Franchises
+
+Let's start with number 1.  Function `getFranchises()` will query the NHL Franchise API to return a data table with all of the NHL franchises, what the team place name and common name are, what the team and franchise IDs are for ALL of the JSON data being queried, as well as the year of their first season (written as 19171918 to indicate it is the 1917-1918 season), as well as the lastSeasonId if that specific franchise no longer exists.   
+
+```{r franchise, echo=TRUE}
+getFranchises <- function(...){
+#franchise json data.  Set up components of URL for API query using GET() function
+  query_prefix <- 'https://records.nhl.com/site/api'
+  query_suffix <- '/franchise'
+  franchiseJSON <- GET(paste0(query_prefix,query_suffix))
+
+#Transform Data from JSON to a data frame
+  franchiseData <- fromJSON(content(franchiseJSON,"text", encoding = "UTF-8"),flatten = TRUE) 
+
+#Rename id to franchiseID
+  franchiseData <- rename(franchiseData$data, franchiseID = id)
+  franchiseData
+
+#Reorganize the data frame with columns in a more usable order
+  franchiseData %>% select(mostRecentTeamId, franchiseID, teamPlaceName, teamCommonName, firstSeasonId, lastSeasonId) %>%
+    arrange(teamPlaceName) %>>% (~ franchiseData)
+  franchiseDT <- datatable(franchiseData, rownames = FALSE)
+
+#Initialize franchiseSelection Table for user to be able to see correct franchise ID for functions #3 - 5.
+  franchiseSelection <- franchiseData
+
+#return datatable
+  return(list(franchiseDT,invisible(franchiseSelection)))
+}
 ```
+
+```{r callgetFranchise, echo=TRUE}
+getFranchises()[[1]]
+```
+
 

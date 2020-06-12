@@ -11,42 +11,55 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r LoadLibraries, include=FALSE, message=FALSE, echo=TRUE}
 library(tidyverse)
-#library(pipeR)
-#library(DT)
-#library(readr)
-#library(convertr)
+library(pipeR)
+library(DT)
 library(knitr)
 library(dplyr)
+library(jsonlite)
+library(httr)
+library(ggplot2)
+#library(readr)
+#library(convertr)
 #library(ggplot2)
 #library(bigrquery)
 #library(DBI)
 #library(RSQLite)
-library(jsonlite)
-library(httr)
 #library(tidyjson)
+#library(readr)
+#library(convertr)
+#library(DBI)
+#library(RSQLite)
 ```
 
 ```{r franchise, echo=TRUE}
-#/franchise json data
-query_prefix <- 'https://records.nhl.com/site/api'
-query_suffix <- '/franchise'
+getFranchises <- function(...){
+#franchise json data.  Set up components of URL for API query using GET() function
+  query_prefix <- 'https://records.nhl.com/site/api'
+  query_suffix <- '/franchise'
+  franchiseJSON <- GET(paste0(query_prefix,query_suffix))
 
-franchiseJSON <- GET(paste0(query_prefix,query_suffix))
+#Transform Data from JSON to a data frame
+  franchiseData <- fromJSON(content(franchiseJSON,"text", encoding = "UTF-8"),flatten = TRUE) 
 
-franchiseData <- fromJSON(content(franchiseJSON,"text", encoding = "UTF-8"),flatten = TRUE) 
+#Rename id to franchiseID
+  franchiseData <- rename(franchiseData$data, franchiseID = id)
+  franchiseData
 
-rename(franchiseData$data, franchiseID = id)
+#Reorganize the data frame with columns in a more usable order
+  franchiseData %>% select(mostRecentTeamId, franchiseID, teamPlaceName, teamCommonName, firstSeasonId, lastSeasonId) %>%
+    arrange(teamPlaceName) %>>% (~ franchiseData)
+  franchiseDT <- datatable(franchiseData, rownames = FALSE)
 
-franchiseData <- rename(franchiseData$data, franchiseID = id)
-franchiseData
+#Initialize franchiseSelection Table for user to be able to see correct franchise ID for functions #3 - 5.
+  franchiseSelection <- franchiseData
 
-franchiseData[is.na(franchiseData)] <- ""
-franchiseData
+#return datatable
+  return(list(franchiseDT,invisible(franchiseSelection)))
+}
+```
 
-
-
-franchiseSelection <- franchiseData
-
+```{r callgetFranchise, echo=TRUE}
+getFranchises()[[1]]
 ```
 
 ```{r franchiseTotals, echo=TRUE}
@@ -64,8 +77,11 @@ franchiseTeamTotsData
  
 ```
 
+
+
 ```{r listOfFranchises, echo=FALSE}
-franchiseSelection %>% select(franchiseID,teamPlaceName,teamCommonName) %>% arrange(teamPlaceName) %>>% (~ franchiseSelection)
+invisible(getFranchises())
+franchiseSelection %>% select(franchiseID, teamPlaceName, teamCommonName) %>% arrange(teamPlaceName) %>>% (~ franchiseSelection)
 datatable(franchiseSelection, rownames = FALSE)
 ```
 
