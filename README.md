@@ -105,36 +105,6 @@ We will use R to build 5 functions that return well-formatted, parsed data from 
 
 Let's start with number 1.  Function `getFranchises()` will query the NHL Franchise API to return a data table with all of the NHL franchises, what the team place name and common name are, what the team and franchise IDs are for ALL of the JSON data being queried, as well as the year of their first season (written as 19171918 to indicate it is the 1917-1918 season), as well as the lastSeasonId if that specific franchise no longer exists.   
 
-```{r franchise, echo=TRUE}
-getFranchises <- function(...){
-#franchise json data.  Set up components of URL for API query using GET() function
-  query_prefix <- 'https://records.nhl.com/site/api'
-  query_suffix <- '/franchise'
-  franchiseJSON <- GET(paste0(query_prefix,query_suffix))
-
-#Transform Data from JSON to a data frame
-  franchiseData <- fromJSON(content(franchiseJSON,"text", encoding = "UTF-8"),flatten = TRUE) 
-
-#Rename id to franchiseID
-  franchiseData <- rename(franchiseData$data, franchiseID = id)
-  franchiseData
-
-#Reorganize the data frame with columns in a more usable order
-  franchiseData %>% select(mostRecentTeamId, franchiseID, teamPlaceName, teamCommonName, firstSeasonId, lastSeasonId) %>%
-    arrange(teamPlaceName) %>>% (~ franchiseData)
-  franchiseDT <- datatable(franchiseData, rownames = FALSE)
-
-#Initialize franchiseSelection Table for user to be able to see correct franchise ID for functions #3 - 5.
-  franchiseSelection <- franchiseData
-
-#return datatable
-  return(list(franchiseDT,invisible(franchiseSelection)))
-}
-```
-
-```{r callgetFranchise, echo=TRUE}
-getFranchises()[[1]]
-```
 
 
 
