@@ -13,8 +13,19 @@ Zack Vaskalis
       - [Possible R Packages for JSON](#possible-r-packages-for-json)
       - [NHL API JSON Data](#nhl-api-json-data)
           - [NHL Franchises](#nhl-franchises)
+          - [Function 1 - getFranchises()](#function-1---getfranchises)
+          - [Function 2 -
+            getFranchiseTotals](#function-2---getfranchisetotals)
+          - [Function 3 -
+            getFranchiseSpecificTotals](#function-3---getfranchisespecifictotals)
+          - [Function 4 -
+            getFranchiseGoalieRecords](#function-4---getfranchisegoalierecords)
+          - [Function 5 -
+            getFranchiseSkaterRecords](#function-5---getfranchiseskaterrecords)
       - [Section for EDA - Exploratory Data
         Analysis](#section-for-eda---exploratory-data-analysis)
+          - [EDA Plots](#eda-plots)
+          - [EDA Tables](#eda-tables)
 
 # Reading and Summarizing JSON Datasets
 
@@ -226,6 +237,11 @@ library packages needed:
 `library(ggplot2)`  
 `library(DBI)`
 
+### Function 1 - getFranchises()
+
+This first function queries the NHL Franchise Database and returns the
+name of every team in the history of the NHL.
+
 ``` r
 #Function to get Franchises
   getFranchises <- function(...)
@@ -256,11 +272,19 @@ library packages needed:
   }
 ```
 
+Then, once that is created you can simply call the function nicely
+wrapped in a datatable:
+
 ``` r
   datatable(getFranchises())
 ```
 
 ![](README_files/figure-gfm/callgetFranchise-1.png)<!-- -->
+
+### Function 2 - getFranchiseTotals
+
+This first function queries the NHL Franchise Database and returns total
+stats for every franchise.
 
 ``` r
 #function to get Franchise Totals
@@ -288,12 +312,20 @@ library packages needed:
   }
 ```
 
+Then you can simply call the function to return the data. Here I have
+again wrapped it in a datatable, and selected only the first 8 columns
+because the data is both wide and long.
+
 ``` r
   franchiseFull <- getFranchiseTotals()
   datatable(franchiseFull[c(1:8)])
 ```
 
 ![](README_files/figure-gfm/callgetFranchiseTotals-1.png)<!-- -->
+
+This little intermediary step creates a nice datatable of just franchise
+names and IDs for the user to look at to request a specific team
+franchise in the last 3 functions.
 
 ``` r
   franchiseSelection <- getFranchises()
@@ -302,6 +334,11 @@ library packages needed:
 ```
 
 ![](README_files/figure-gfm/listOfFranchises-1.png)<!-- -->
+
+### Function 3 - getFranchiseSpecificTotals
+
+So, once again, as the name might suggest, this function returns the
+records for a specific franchise.
 
 ``` r
 #Function to get Franchise Specific Totals
@@ -329,6 +366,12 @@ library packages needed:
   }
 ```
 
+Once again we can simply call the function to get the data, with the
+caveat this time of providing the franchiseId as an argument. Again, for
+aesthetics it is presented wrapped in a datatable and transposed since
+it was returned as a 1x57 data frame, the `t()` helped to transform it
+from wide to long as a 57x1.
+
 ``` r
 #Two test function calls - one for my favorite team, GO PENS! & one for the hometown favorite Hurricanes!
 #function to pull records for Pittsburgh Penguins
@@ -345,6 +388,10 @@ library packages needed:
 ```
 
 ![](README_files/figure-gfm/callgetFranchiseSpecificTotals-2.png)<!-- -->
+
+### Function 4 - getFranchiseGoalieRecords
+
+This function returns the goalie records for a specific franchise.
 
 ``` r
 #Function to get Franchise Goalie Records
@@ -374,6 +421,10 @@ library packages needed:
   }
 ```
 
+Once again, we call the function with the franchiseId as a provided
+argument. Also, this data is wide and long again, so only the first 8
+columns of data are presented.
+
 ``` r
 #Two test function calls - one for my favorite team, GO PENS! & one for the hometown favorite Hurricanes!
 #function to pull records for Pittsburgh Penguins and print out first 8 columns to display well on the page
@@ -392,6 +443,11 @@ library packages needed:
 ```
 
 ![](README_files/figure-gfm/callgetFranchiseGoalieRecords-2.png)<!-- -->
+
+### Function 5 - getFranchiseSkaterRecords
+
+The fifth and final function returns the skater records for a specific
+user-designated franchise.
 
 ``` r
 #Function to get Franchise Skater Records
@@ -422,6 +478,10 @@ library packages needed:
   }
 ```
 
+Once again, we call the function with the franchiseId as a provided
+argument. Also, this data is wide and long again, so only the first 8
+columns of data are presented.
+
 ``` r
 #Two test function calls - one for my favorite team, GO PENS! & one for the hometown favorite Hurricanes!
 #function to pull records for Pittsburgh Penguins. Variable teamFull has full dataset. Needed to subset to display
@@ -440,10 +500,56 @@ library packages needed:
 
 ![](README_files/figure-gfm/callgetFranchiseSkaterRecords-2.png)<!-- -->
 
+## Section for EDA - Exploratory Data Analysis
+
+For this project I could not help but use the Pittsburgh Penguins. They
+have been my favorite team forever. Even though I grew up in the
+Scranton area (on the opposite side of PA), I have always been a Pens
+fan. Additionally, the little Pens play in Wilkes-Barre, so I got to see
+many of the Pens players play before they made it to the big leagues, or
+where they would come to recoup an injury. Thus, I will use the Penguins
+Skater dataset as much as I can for the remainder of this project.
+
+### EDA Plots
+
+Below you will see several different plots. The first is a simple
+horizontal bar chart displaying the counts by position for the all-time
+Pittsburgh Penguins Skaters, as far as this dataset is accurate from the
+NHL API. We see what would appear to be a larger number of defensemen,
+but that is actually a little visually misleading, since Right Wingers,
+Left Wingers, and Centers all count as “offensemen.”
+
+The second plot helps differentiate a bit more, in that the data is
+broken down by active and non-active or retired players. The black bars
+are largest and represent the non-active/retired players. This should
+make intuitive sense as any given hockey team can only have *23* number
+of players on the roster in any given season.
+
+The third graph is a boxplot showing the most points scored in a single
+game across all position types. As might be expected, a center has the
+absolute highest points with 8. This is none other than the great Mario
+Lemieux\! However, it is quite surprising to me, that in terms of a
+statistical comparison of medians using an “eyeball” test rather than a
+nonparametric medians test like Kruskal-Wallis, they appear to be equal
+across offensemen, and only unequal compared to defensemen, which makes
+sense given thier roles on the team.
+
+The two final plots are scatterplots, plotting total goals on the x-axis
+by penalty minutes on the y-axis. The first color-codes the scatter
+points by position code, the second codes the points by the created
+variable offDef which stands for offense / defense, and is a grouping of
+the 3 offensive position types. These graphs allow us to see that
+typically, the defensive players land themselves in the penalty box
+quite frequently, and quite often have much less than 50 total goals,
+whereas offensemen spend less time in the penalty box and more time
+scoring. For the purpose of this analysis I did not have time to dive
+into the data to see who the great ones are in the upper right corner,
+representing prowess in terms of scoring ability as well as the ability
+to thrown down and earn substantial time in the box. It really intrigues
+me to know who these players are\!
+
 ``` r
-#Get FULL Pittsburgh Goalie and Skater Datasets
-  goalieFull <- getFranchiseGoalieRecords(17)
-  #datatable(goalieFull)
+#Get FULL Pittsburgh Skater Dataset
 
   skaterFull <- getFranchiseSkaterRecords(17)
   #datatable(skaterFull)
@@ -508,10 +614,39 @@ library packages needed:
 
 ![](README_files/figure-gfm/EDA_Plots-5.png)<!-- -->
 
+### EDA Tables
+
+Below you will see several different tables and output from the R
+console summarizing some statistics related to the Penguins Skaters
+dataset.
+
+The first piece of output is a small tibble, examining means and
+standard deviations for offensemen and defensemen for 3 variables:
+points, assists, and goals. This table is important because it
+corroborates the last two scatterplots and confirms numerically that
+defensemen score much less than the offensemen, although it is worthy to
+note the mean assists are much closer together than the points or goals,
+although there is quite a great deal of variance contained in the
+disributions of assists across the two groups.
+
+The second table is a summary table for points, goals, assists, and
+penalty minutes for the entire set of Pens skaters. The data included
+are minimums and maximums, means and standard deviations, as well as the
+1st and 3rd quartiles. The most interesting thing to me here is that
+there are players who literally did nothing - but probably still got
+paid\! The minimum across each category is 0, which again to me, was
+highly unexpected.
+
+The final two pieces of output are 3 way contingency tables showing the
+most points in a game, across position type in the first one, and across
+offense/defense in the second one, both broken apart by inactive and
+active respectively. Both sets of tables seem to show that the
+youngsters have some big skates to fill and have some catching up to do
+if they want to compete with the legendary old timers, particularly the
+centers, but really the offense in general.
+
 ``` r
-#Get FULL Pittsburgh Goalie and Skater Datasets
-  goalieFull <- getFranchiseGoalieRecords(17)
-  #datatable(goalieFull)
+#Get FULL Pittsburgh Skater Dataset
 
   skaterFull <- getFranchiseSkaterRecords(17)
   #datatable(skaterFull)
@@ -593,13 +728,3 @@ library packages needed:
     ##             0   1   2   3   4   5   6   7   8
     ##   Defense   1   8  11   3   2   1   0   0   0
     ##   Offense   1  10  15  16   4   4   1   0   0
-
-## Section for EDA - Exploratory Data Analysis
-
-For this project I could not help but use the Pittsburgh Penguins. They
-have been my favorite team forever. Even though I grew up in the
-Scranton area (on the opposite side of PA), I have always been a Pens
-fan. Additionally, the little Pens play in Wilkes-Barre, so I got to see
-many of the Pens players play before they made it to the big leagues, or
-where they would come to recoup an injury. Thus, I will use the Penguins
-Skater dataset as much as I can for the remainder of this project.

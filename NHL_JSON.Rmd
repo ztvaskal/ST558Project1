@@ -283,7 +283,7 @@ library(DBI)
   #datatable(goalieFull)
 
   skaterFull <- getFranchiseSkaterRecords(17)
-  #datatable(skaterFull)
+  datatable(skaterFull)
 
 #New Variable OffDef: Take positionCOde and Transform: C, L, R = Offense, D = Defense
   skaterFull <- mutate(skaterFull, OffDef = ifelse((positionCode == "D"), "Defense", "Offense"))  
