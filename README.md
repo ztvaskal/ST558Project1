@@ -12,7 +12,9 @@ Zack Vaskalis
           - [A good way to store data?](#a-good-way-to-store-data)
       - [Possible R Packages for JSON](#possible-r-packages-for-json)
       - [NHL API JSON Data](#nhl-api-json-data)
-          - [1. NHL Franchises](#nhl-franchises)
+          - [NHL Franchises](#nhl-franchises)
+      - [Section for EDA - Exploratory Data
+        Analysis](#section-for-eda---exploratory-data-analysis)
 
 # Reading and Summarizing JSON Datasets
 
@@ -210,15 +212,7 @@ NHL Records Franchise API calls:
 5.  /franchise-skater-records?cayenneExp=franchiseId=ID (Skater records,
     for a user-specified franchise ID)
 
-### 1\. NHL Franchises
-
-Let’s start with number 1. Function `getFranchises()` will query the NHL
-Franchise API to return a data table with all of the NHL franchises,
-what the team place name and common name are, what the team and
-franchise IDs are for ALL of the JSON data being queried, as well as the
-year of their first season (written as 19171918 to indicate it is the
-1917-1918 season), as well as the lastSeasonId if that specific
-franchise no longer exists.
+### NHL Franchises
 
 library packages needed:
 
@@ -229,7 +223,8 @@ library packages needed:
 `library(dplyr)`  
 `library(jsonlite)`  
 `library(httr)`  
-`library(ggplot2)`
+`library(ggplot2)`  
+`library(DBI)`
 
 ``` r
 #Function to get Franchises
@@ -321,7 +316,8 @@ library packages needed:
 
 #Get JSON Data
     franchiseIDTeamTotsDataJSON <- GET(paste0(query_prefix,query_suffix,specific_franchiseID))
-    franchiseIDTeamTotsData <- fromJSON(content(franchiseIDTeamTotsDataJSON,"text", encoding = "UTF-8"),flatten = TRUE)
+    franchiseIDTeamTotsData <- fromJSON(content(franchiseIDTeamTotsDataJSON,"text", encoding = "UTF-8"),
+                                        flatten = TRUE)
 
 #Reorganize the data frame with columns in a more usable order
     franchiseIDTeamTotsDataTBL <- tibble::as_tibble(franchiseIDTeamTotsData)
@@ -363,13 +359,15 @@ library packages needed:
 
 #Get JSON Data
     franchiseIDGoalieJSON <- GET(paste0(query_prefix,query_suffix,specific_franchiseID))
-    franchiseIDGoalieData <- fromJSON(content(franchiseIDGoalieJSON,"text", encoding = "UTF-8"),flatten = TRUE)
+    franchiseIDGoalieData <- fromJSON(content(franchiseIDGoalieJSON,"text", encoding = "UTF-8"),
+                                      flatten = TRUE)
 
 #Reorganize the data frame with columns in a more usable order
 
     goalieDF <- franchiseIDGoalieData$data
-    goalieDF %>% select(franchiseId, franchiseName, firstName, lastName, gamesPlayed, wins, losses, ties,
-                        mostSavesOneGame, mostShotsAgainstOneGame, mostGoalsAgainstOneGame, id:wins) %>>% (~ goalieDF)
+    goalieDF %>% select(franchiseId, franchiseName, firstName, lastName, gamesPlayed, wins,
+                        losses, ties, mostSavesOneGame, mostShotsAgainstOneGame,
+                        mostGoalsAgainstOneGame, id:wins) %>>% (~ goalieDF)
 
 #Return data
     return(goalieDF)
@@ -378,7 +376,7 @@ library packages needed:
 
 ``` r
 #Two test function calls - one for my favorite team, GO PENS! & one for the hometown favorite Hurricanes!
-#function to pull records for Pittsburgh Penguins
+#function to pull records for Pittsburgh Penguins and print out first 8 columns to display well on the page
 
   goalieFull <- getFranchiseGoalieRecords(17)
   datatable(goalieFull[c(1:8)])
@@ -387,7 +385,7 @@ library packages needed:
 ![](README_files/figure-gfm/callgetFranchiseGoalieRecords-1.png)<!-- -->
 
 ``` r
-#Function to pull records for Carolina Hurricanes
+#Function to pull records for Carolina Hurricanes and print out first 8 columns to display well on the page
 
   goalieFull <- getFranchiseGoalieRecords(26)
   datatable(goalieFull[c(1:8)])
@@ -396,7 +394,7 @@ library packages needed:
 ![](README_files/figure-gfm/callgetFranchiseGoalieRecords-2.png)<!-- -->
 
 ``` r
-#Function to get Franchise Goalie Records
+#Function to get Franchise Skater Records
   getFranchiseSkaterRecords <- function(FranID, ...)
   {
 
@@ -409,14 +407,15 @@ library packages needed:
     
 #Get JSON Data
     franchiseIDSkaterJSON <- GET(paste0(query_prefix,query_suffix,specific_franchiseID))
-    franchiseIDSkaterData <- fromJSON(content(franchiseIDSkaterJSON,"text", encoding = "UTF-8"),flatten = TRUE)
+    franchiseIDSkaterData <- fromJSON(content(franchiseIDSkaterJSON,"text", encoding = "UTF-8"),
+                                      flatten = TRUE)
 
 #Reorganize the data frame with columns in a more usable order
 
     skaterDF <- franchiseIDSkaterData$data
-    skaterDF %>% select(franchiseId, franchiseName, firstName, lastName, positionCode, gamesPlayed, goals,
-                        assists, penaltyMinutes, mostGoalsOneGame, mostAssistsOneGame, mostPenaltyMinutesOneSeason,
-                        id:seasons) %>% arrange(desc(goals)) %>>% (~ skaterDF)
+    skaterDF %>% select(franchiseId, franchiseName, firstName, lastName, positionCode, 
+                        gamesPlayed, goals, assists, penaltyMinutes, mostGoalsOneGame, mostAssistsOneGame,
+                        mostPenaltyMinutesOneSeason, id:seasons) %>% arrange(desc(goals)) %>>% (~ skaterDF)
     
 #Return Data
     return(skaterDF)
@@ -426,17 +425,181 @@ library packages needed:
 ``` r
 #Two test function calls - one for my favorite team, GO PENS! & one for the hometown favorite Hurricanes!
 #function to pull records for Pittsburgh Penguins. Variable teamFull has full dataset. Needed to subset to display
-  teamFull <- getFranchiseSkaterRecords(17)
-  datatable(teamFull[c(1:8)])
+  skaterFull <- getFranchiseSkaterRecords(17)
+  datatable(skaterFull[c(1:8)])
 ```
 
 ![](README_files/figure-gfm/callgetFranchiseSkaterRecords-1.png)<!-- -->
 
 ``` r
-#Function to pull records for Carolina Hurricanes
+#Function to pull records for Carolina Hurricanes and print out first 8 columns to display well on the page
 
-  teamFull <- getFranchiseSkaterRecords(26)
-  datatable(teamFull[c(1:8)])
+  skaterFull <- getFranchiseSkaterRecords(26)
+  datatable(skaterFull[c(1:8)])
 ```
 
 ![](README_files/figure-gfm/callgetFranchiseSkaterRecords-2.png)<!-- -->
+
+``` r
+#Get FULL Pittsburgh Goalie and Skater Datasets
+  goalieFull <- getFranchiseGoalieRecords(17)
+  #datatable(goalieFull)
+
+  skaterFull <- getFranchiseSkaterRecords(17)
+  #datatable(skaterFull)
+  
+#Penguins Official Colors from: https://teamcolorcodes.com/pittsburgh-penguins-color-codes/
+  pensColors <- c("#000000", "#CFC493", "#FCB514", "#FFFFFF")
+  pensColors2 <- c("#000000", "#000000", "#000000", "#000000", "#CFC493", "#CFC493",
+                   "#CFC493", "#CFC493")
+
+#All time Pens Skaters by Position
+  g1 <- ggplot(data=skaterFull, aes(x = positionCode))
+  g1 + geom_bar() + labs(x = "Penguins Skater Position",
+                        title = "Pittsburgh Penguins All Time Skater Positions") +
+    scale_x_discrete(labels = c("Center", "Defense", "Left Wing", "Right Wing")) +
+    coord_flip()
+```
+
+![](README_files/figure-gfm/EDA_Plots-1.png)<!-- -->
+
+``` r
+#All time Pens Skaters by Position and Active = Yes/No Status
+  g2 <- ggplot(data=skaterFull, aes(x = positionCode, group = activePlayer))
+  g2 + geom_bar(fill=pensColors2, position = "dodge") +
+    labs(x = "Penguins Skater Position", title = "Pittsburgh Penguins All Time Skater Positions") +
+    scale_x_discrete(labels = c("Center", "Defense", "Left Wing", "Right Wing")) +
+    scale_fill_discrete(name = "Active Player?", labels = c("FALSE" = "No", "TRUE" = "Yes"))
+```
+
+![](README_files/figure-gfm/EDA_Plots-2.png)<!-- -->
+
+``` r
+#All time Pens Skater Most Points in One Game by Position
+  g3 <- ggplot(skaterFull, aes(x = positionCode, y = mostPointsOneGame))
+  g3 + geom_boxplot(fill=pensColors[3]) +
+    labs(x = "Penguins Skater Position",
+         title = "Pittsburgh Penguins Most Points in One Game by Position") +
+    scale_x_discrete(labels = c("Center", "Defense", "Left Wing", "Right Wing"))
+```
+
+![](README_files/figure-gfm/EDA_Plots-3.png)<!-- -->
+
+``` r
+#All time Pens Skater Scatterplot of Goals vs Penalty Minutes
+  ggplot()+
+  geom_point(data = skaterFull, aes(x = goals, y = penaltyMinutes, color = positionCode),size=4) +
+      scale_color_manual(values = pensColors) +
+    labs(x = "Total Goals", title = "Pittsburgh Penguins Goals by Penalty Minutes Colored by Position")
+```
+
+![](README_files/figure-gfm/EDA_Plots-4.png)<!-- -->
+
+``` r
+#New Variable OffDef: Take positionCOde and Transform: C, L, R = Offense, D = Defense
+  skaterFull <- mutate(skaterFull, OffDef = ifelse((positionCode == "D"), "Defense", "Offense"))
+      
+#Run Same plot again, now with new variable
+  ggplot()+
+  geom_point(data = skaterFull, aes(x = goals, y = penaltyMinutes, color = OffDef),size=4) +
+      scale_color_manual(values = pensColors) +
+    labs(x = "Total Goals", title = "Pittsburgh Penguins Goals by Penalty Minutes Colored by Position")
+```
+
+![](README_files/figure-gfm/EDA_Plots-5.png)<!-- -->
+
+``` r
+#Get FULL Pittsburgh Goalie and Skater Datasets
+  goalieFull <- getFranchiseGoalieRecords(17)
+  #datatable(goalieFull)
+
+  skaterFull <- getFranchiseSkaterRecords(17)
+  #datatable(skaterFull)
+
+#New Variable OffDef: Take positionCOde and Transform: C, L, R = Offense, D = Defense
+  skaterFull <- mutate(skaterFull, OffDef = ifelse((positionCode == "D"), "Defense", "Offense"))  
+
+#Numerical Summary of means and standard deviations for points, assists, goals, and penalty minutes
+  skaterFull %>% group_by(OffDef) %>% summarize(avg_points = mean(points), sd_points = sd(points),
+                                                avg_assists = mean(assists), sd_assists = sd(assists),
+                                                avg_goals = mean(goals), sd_goals = sd(goals),
+                                                avg_penaltyMin = mean(penaltyMinutes),
+                                                sd_penaltyMin = sd(penaltyMinutes))
+```
+
+    ## `summarise()` ungrouping output (override with `.groups` argument)
+
+    ## # A tibble: 2 x 9
+    ##   OffDef avg_points sd_points avg_assists sd_assists avg_goals sd_goals
+    ##   <chr>       <dbl>     <dbl>       <dbl>      <dbl>     <dbl>    <dbl>
+    ## 1 Defen~       37.9      67.9        29.7       52.8      8.16     15.6
+    ## 2 Offen~       64.1     153.         37.4       91.7     26.8      62.1
+    ## # ... with 2 more variables: avg_penaltyMin <dbl>, sd_penaltyMin <dbl>
+
+``` r
+#Numerical Summary Statistics for Penguins Skaters
+  summaryTBL <- tibble(summary(skaterFull$points, digits = 4), summary(skaterFull$goals, digits = 4),
+                       summary(skaterFull$assists, digits = 4), summary(skaterFull$penaltyMinutes, digits = 4))
+  summaryTBL <- rename(summaryTBL, "points" = "summary(skaterFull$points, digits = 4)",
+                       "goals" = "summary(skaterFull$goals, digits = 4)" ,
+                       "assists" = "summary(skaterFull$assists, digits = 4)",
+                       "Penalty Minutes" = "summary(skaterFull$penaltyMinutes, digits = 4)")
+  attr(summaryTBL, "row.names") <- c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.", "Max.")
+  datatable(summaryTBL)
+```
+
+![](README_files/figure-gfm/EDA_Tables-1.png)<!-- -->
+
+``` r
+#Three way contingency table to show most points in one game by position code
+#Tables are separated by active (TRUE) and non-active (FALSE) players
+  table(skaterFull$positionCode,skaterFull$mostPointsOneGame,skaterFull$activePlayer)
+```
+
+    ## , ,  = FALSE
+    ## 
+    ##    
+    ##      0  1  2  3  4  5  6  7  8
+    ##   C 16 19 43 29 18  4  4  0  1
+    ##   D 22 51 72 31 11  3  1  0  0
+    ##   L 14 26 43 32 10  2  2  0  0
+    ##   R 14 26 40 29 11  3  4  1  0
+    ## 
+    ## , ,  = TRUE
+    ## 
+    ##    
+    ##      0  1  2  3  4  5  6  7  8
+    ##   C  1  7 10  7  1  2  1  0  0
+    ##   D  1  8 11  3  2  1  0  0  0
+    ##   L  0  2  3  5  1  1  0  0  0
+    ##   R  0  1  2  4  2  1  0  0  0
+
+``` r
+#Another Three way contingency table using created variable OffDef show most points in one game
+#by Offense vs Defense.  Tables are again separated by active (TRUE) and non-active (FALSE) players
+  table(skaterFull$OffDef,skaterFull$mostPointsOneGame,skaterFull$activePlayer)
+```
+
+    ## , ,  = FALSE
+    ## 
+    ##          
+    ##             0   1   2   3   4   5   6   7   8
+    ##   Defense  22  51  72  31  11   3   1   0   0
+    ##   Offense  44  71 126  90  39   9  10   1   1
+    ## 
+    ## , ,  = TRUE
+    ## 
+    ##          
+    ##             0   1   2   3   4   5   6   7   8
+    ##   Defense   1   8  11   3   2   1   0   0   0
+    ##   Offense   1  10  15  16   4   4   1   0   0
+
+## Section for EDA - Exploratory Data Analysis
+
+For this project I could not help but use the Pittsburgh Penguins. They
+have been my favorite team forever. Even though I grew up in the
+Scranton area (on the opposite side of PA), I have always been a Pens
+fan. Additionally, the little Pens play in Wilkes-Barre, so I got to see
+many of the Pens players play before they made it to the big leagues, or
+where they would come to recoup an injury. Thus, I will use the Penguins
+Skater dataset as much as I can for the remainder of this project.
